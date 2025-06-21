@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangladesh Quiz</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Full viewport height */
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .quiz-container {
+            background-color: #ffffff; /* White background for the quiz box */
+            border-radius: 16px; /* More rounded corners */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            padding: 30px;
+            max-width: 600px; /* Max width for readability */
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out; /* Fade-in animation */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .question-text {
+            font-size: 1.5rem; /* Larger font for questions */
+            font-weight: 600; /* Semi-bold */
+            color: #2c3e50; /* Dark blue text */
+            margin-bottom: 25px;
+            min-height: 80px; /* Ensure consistent height for questions */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .option-button {
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            background-color: #e0f2fe; /* Light blue for options */
+            color: #2c3e50;
+            border: 2px solid #a7d9f7; /* Slightly darker border */
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+            text-align: left; /* Align text to the left */
+        }
+        .option-button:hover:not(.selected):not(.correct):not(.incorrect) {
+            background-color: #bbdefb; /* Lighter blue on hover */
+            border-color: #8ac0ed;
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+        .option-button.selected {
+            background-color: #90caf9; /* Medium blue when selected */
+            border-color: #64b5f6;
+            transform: scale(1.01);
+        }
+        .option-button.correct {
+            background-color: #c8e6c9; /* Light green for correct */
+            border-color: #81c784;
+            color: #1b5e20; /* Dark green text */
+            pointer-events: none; /* Disable clicks after selection */
+        }
+        .option-button.incorrect {
+            background-color: #ffcdd2; /* Light red for incorrect */
+            border-color: #e57373;
+            color: #b71c1c; /* Dark red text */
+            pointer-events: none; /* Disable clicks after selection */
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+        }
+        .navigation-buttons button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .navigation-buttons button:hover {
+            transform: translateY(-1px);
+        }
+        .next-button, .submit-button {
+            background-color: #42a5f5; /* Blue */
+            color: white;
+            border: none;
+        }
+        .next-button:hover, .submit-button:hover {
+            background-color: #2196f3; /* Darker blue */
+        }
+        .restart-button {
+            background-color: #66bb6a; /* Green */
+            color: white;
+            border: none;
+        }
+        .restart-button:hover {
+            background-color: #43a047; /* Darker green */
+        }
+        .results-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e3f2fd; /* Lighter blue for results */
+            border-radius: 10px;
+            border: 1px solid #90caf9;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        .hidden {
+            display: none;
+        }
+        .feedback {
+            margin-top: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .feedback.correct {
+            color: #2e7d32; /* Dark green for correct feedback */
+        }
+        .feedback.incorrect {
+            color: #c62828; /* Dark red for incorrect feedback */
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Bangladesh Quiz</h1>
+
+        <div id="quiz-screen">
+            <div class="question-text" id="question-text"></div>
+            <div id="options-container" class="flex flex-col gap-3">
+                <!-- Options will be dynamically loaded here -->
+            </div>
+            <div id="feedback" class="feedback"></div>
+            <div class="navigation-buttons">
+                <button id="next-button" class="next-button" style="display: none;">Next Question</button>
+                <button id="submit-button" class="submit-button" style="display: none;">Submit Quiz</button>
+            </div>
+        </div>
+
+        <div id="results-screen" class="hidden">
+            <div class="results-container">
+                <p>Quiz Completed!</p>
+                <p>Your Score: <span id="score-display">0</span> out of <span id="total-questions-display">5</span></p>
+            </div>
+            <button id="restart-button" class="restart-button mt-6">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "What is the capital city of Bangladesh?",
+                options: ["Chittagong", "Sylhet", "Dhaka", "Khulna"],
+                answer: "Dhaka"
+            },
+            {
+                question: "When did Bangladesh gain independence?",
+                options: ["1947", "1965", "1971", "1982"],
+                answer: "1971"
+            },
+            {
+                question: "Which river is famously known as the 'Lifeline of Bangladesh' and is one of the world's largest deltas?",
+                options: ["Brahmaputra", "Meghna", "Jamuna", "Padma (Ganges)"],
+                answer: "Padma (Ganges)"
+            },
+            {
+                question: "What is the national flower of Bangladesh?",
+                options: ["Rose", "Water Lily (Shapla)", "Lotus", "Jasmine"],
+                answer: "Water Lily (Shapla)"
+            },
+            {
+                question: "Which sport is considered the national sport of Bangladesh?",
+                options: ["Football", "Cricket", "Kabaddi", "Hockey"],
+                answer: "Kabaddi"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOption = null;
+        let quizCompleted = false;
+
+        const questionTextElement = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackElement = document.getElementById('feedback');
+        const nextButton = document.getElementById('next-button');
+        const submitButton = document.getElementById('submit-button');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const scoreDisplay = document.getElementById('score-display');
+        const totalQuestionsDisplay = document.getElementById('total-questions-display');
+        const restartButton = document.getElementById('restart-button');
+
+        // Function to load a question
+        function loadQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const questionData = questions[currentQuestionIndex];
+                questionTextElement.textContent = questionData.question;
+                optionsContainer.innerHTML = ''; // Clear previous options
+                feedbackElement.textContent = ''; // Clear feedback
+
+                // Create buttons for each option
+                questionData.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option-button');
+                    button.onclick = () => selectAnswer(button, option, questionData.answer);
+                    optionsContainer.appendChild(button);
+                });
+
+                selectedOption = null; // Reset selected option
+                nextButton.style.display = 'none'; // Hide next button initially
+                submitButton.style.display = 'none'; // Hide submit button initially
+                // Re-enable all option buttons
+                document.querySelectorAll('.option-button').forEach(button => {
+                    button.classList.remove('selected', 'correct', 'incorrect');
+                    button.style.pointerEvents = 'auto';
+                });
+            } else {
+                showResults(); // If no more questions, show results
+            }
+        }
+
+        // Function to handle answer selection
+        function selectAnswer(button, selected, correct) {
+            if (selectedOption !== null) return; // Prevent changing answer after initial selection
+
+            selectedOption = selected;
+            button.classList.add('selected'); // Mark as selected
+
+            // Disable all option buttons after an answer is chosen
+            document.querySelectorAll('.option-button').forEach(btn => btn.style.pointerEvents = 'none');
+
+            if (selected === correct) {
+                score++;
+                feedbackElement.textContent = 'Correct!';
+                feedbackElement.classList.remove('incorrect');
+                feedbackElement.classList.add('correct');
+                button.classList.add('correct'); // Highlight correct button
+            } else {
+                feedbackElement.textContent = `Incorrect. The correct answer was: ${correct}`;
+                feedbackElement.classList.remove('correct');
+                feedbackElement.classList.add('incorrect');
+                button.classList.add('incorrect'); // Highlight incorrect button
+
+                // Also highlight the correct answer if incorrect option was chosen
+                Array.from(optionsContainer.children).find(btn => btn.textContent === correct)?.classList.add('correct');
+            }
+
+            // Show appropriate navigation button
+            if (currentQuestionIndex < questions.length - 1) {
+                nextButton.style.display = 'block';
+            } else {
+                submitButton.style.display = 'block';
+            }
+        }
+
+        // Function to go to the next question
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        // Function to show results screen
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            scoreDisplay.textContent = score;
+            totalQuestionsDisplay.textContent = questions.length;
+            quizCompleted = true;
+        }
+
+        // Function to restart the quiz
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            quizCompleted = false;
+            quizScreen.classList.remove('hidden');
+            resultsScreen.classList.add('hidden');
+            loadQuestion();
+        }
+
+        // Event Listeners
+        nextButton.addEventListener('click', nextQuestion);
+        submitButton.addEventListener('click', showResults);
+        restartButton.addEventListener('click', restartQuiz);
+
+        // Initial load
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>
